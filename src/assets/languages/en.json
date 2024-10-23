@@ -1,3 +1,5 @@
 {
-  "welcome": "Welcome"
+  "welcome": "Welcome",
+  "dashboard": "Hello, Dashboard",
+  "services": "Hello, Services"
 }

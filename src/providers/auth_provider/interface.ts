@@ -1,26 +1,31 @@
 import { ReactNode } from "react";
 
+export interface UserTypes {
+  id: number;
+  age: number;
+  role: string;
+  email: string;
+  username: string;
+  lastName: string;
+  firstName: string;
+}
+
 export interface AuthContextType {
-  error: string;
-  setUser: unknown;
+  user: UserTypes;
   loading: boolean;
-  user: UserStateProps;
-  handleLogIn: (username: string, password: string) => Promise<unknown>;
-  handleLogOut: () => void;
+  isAuth: boolean;
+  error: string;
+  onLogin: (args: { username: string; password: string }) => Promise<unknown>;
+  onLogOut: () => void;
+}
+
+export interface CredentialsProps {
+  username: string;
+  password: string;
 }
 
 export interface AuthProviderProps {
   children: ReactNode;
-}
-
-export interface UserStateProps {
-  id: number | null | undefined;
-  age: number | null | undefined;
-  role: string | null | undefined;
-  email: string | null | undefined;
-  username: string | null | undefined;
-  lastName: string | null | undefined;
-  firstName: string | null | undefined;
 }
 
 export const USER_INITIAL_STATE = {

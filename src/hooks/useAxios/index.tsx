@@ -14,17 +14,17 @@ export const useAxios = () => {
   });
 
   const handleLogOut = () => {
-    localStorage.removeItem("accessTokens");
+    localStorage.removeItem("accessToken");
     window.location.href = "/login";
   };
 
   instance.interceptors.request.use(async (req) => {
-    let accessTokens = getAccessTokens();
+    const accessToken = getAccessTokens();
 
-    if (!accessTokens?.access) return req;
+    if (!accessToken) return req;
 
     try {
-      const decoded: { exp?: number } = jwtDecode(accessTokens.access);
+      const decoded: { exp?: number } = jwtDecode(accessToken);
 
       if (decoded.exp) {
         const isExpired = dayjs.unix(decoded.exp).diff(dayjs()) < 1000;
@@ -32,20 +32,16 @@ export const useAxios = () => {
         if (isExpired) {
           try {
             const response = await axios.post(`${serverURL}/auth/refresh`, {
-              refreshToken: accessTokens?.refresh,
+              refreshToken: accessToken,
             });
 
-            accessTokens = {
-              access: response.data.token,
-              refresh: response.data.refreshToken,
-            };
-            localStorage.setItem("accessTokens", JSON.stringify(accessTokens));
+            localStorage.setItem("accessToken", response.data.accessToken);
           } catch (error) {
             handleLogOut();
           }
         }
 
-        req.headers.Authorization = `Bearer ${accessTokens.access}`;
+        req.headers.Authorization = `Bearer ${accessToken}`;
       } else {
         handleLogOut();
       }

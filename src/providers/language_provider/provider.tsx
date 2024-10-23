@@ -24,7 +24,9 @@ const loadTranslations = async (language: string): Promise<Translations> => {
 };
 
 export const LanguageProvider: FC<LanguageProviderProps> = ({ children }) => {
-  const [currentLang, setCurrentLang] = useState<string>(LanguageOption.EN);
+  const [currentLang, setCurrentLang] = useState<string>(() => {
+    return localStorage.getItem("language") || LanguageOption.EN;
+  });
   const [translations, setTranslations] = useState<Translations>({});
 
   useEffect(() => {
@@ -36,7 +38,10 @@ export const LanguageProvider: FC<LanguageProviderProps> = ({ children }) => {
     fetchTranslations();
   }, [currentLang]);
 
-  const changeLanguage = (language: string) => setCurrentLang(language);
+  const changeLanguage = (language: string) => {
+    setCurrentLang(language);
+    localStorage.setItem("language", language);
+  };
 
   const t = (key: string): string => {
     return translations[key] || key;
