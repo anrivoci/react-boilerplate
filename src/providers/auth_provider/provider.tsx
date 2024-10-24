@@ -11,13 +11,11 @@ import {
 } from "./interface";
 import { getAccessTokens } from "../../helpers";
 
-export const AuthContext = createContext<AuthContextType | undefined>(
-  undefined
-);
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
+const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   const api = useAxios();
-  const accessToken = getAccessTokens();
+  const { accessToken } = getAccessTokens();
 
   const userDetails = useQuery({
     queryKey: ["user"],
@@ -32,7 +30,13 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
     async (credentials: CredentialsProps) => {
       const response = await api.post("/auth/login", { ...credentials });
 
-      localStorage.setItem("accessToken", response.data.accessToken);
+      const tokens = {
+        accessToken: response.data.accessToken,
+        refreshToken: response.data.refreshToken,
+      };
+
+      localStorage.setItem("authTokens", JSON.stringify(tokens));
+
       return response.data;
     },
     {
@@ -46,7 +50,7 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
   );
 
   const onLogOut = () => {
-    localStorage.removeItem("accessToken");
+    localStorage.removeItem("authTokens");
     window.location.href = "/login";
   };
 
@@ -61,3 +65,5 @@ export const AuthProvider: FC<AuthProviderProps> = ({ children }) => {
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
+
+export { AuthProvider, AuthContext };

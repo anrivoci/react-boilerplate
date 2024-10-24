@@ -1,9 +1,8 @@
-//other-libs
 import axios from "axios";
-import dayjs from "dayjs";
-import { jwtDecode } from "jwt-decode";
 //helpers
 import { getAccessTokens, serverURL } from "../../helpers";
+//services
+import { isTokenExpired, refreshAccessToken } from "./services";
 
 export const useAxios = () => {
   const instance = axios.create({
@@ -13,55 +12,27 @@ export const useAxios = () => {
     },
   });
 
-  const handleLogOut = () => {
-    localStorage.removeItem("accessToken");
-    window.location.href = "/login";
-  };
-
   instance.interceptors.request.use(async (req) => {
-    const accessToken = getAccessTokens();
+    const tokens = getAccessTokens();
+    if (!tokens?.accessToken) return req;
 
-    if (!accessToken) return req;
+    const { accessToken, refreshToken } = tokens;
 
-    try {
-      const decoded: { exp?: number } = jwtDecode(accessToken);
-
-      if (decoded.exp) {
-        const isExpired = dayjs.unix(decoded.exp).diff(dayjs()) < 1000;
-
-        if (isExpired) {
-          try {
-            const response = await axios.post(`${serverURL}/auth/refresh`, {
-              refreshToken: accessToken,
-            });
-
-            localStorage.setItem("accessToken", response.data.accessToken);
-          } catch (error) {
-            handleLogOut();
-          }
-        }
-
-        req.headers.Authorization = `Bearer ${accessToken}`;
-      } else {
-        handleLogOut();
+    if (isTokenExpired(accessToken)) {
+      const newAccessToken = await refreshAccessToken(refreshToken);
+      if (newAccessToken) {
+        req.headers.Authorization = `Bearer ${newAccessToken}`;
       }
-    } catch (error) {
-      handleLogOut();
+    } else {
+      req.headers.Authorization = `Bearer ${accessToken}`;
     }
 
     return req;
   });
 
   instance.interceptors.response.use(
-    function (response) {
-      return response;
-    },
-    function (error) {
-      // Enter your custom pop up
-      // to display all network request
-      // errors dynamically here!
-      return Promise.reject(error);
-    }
+    (response) => response,
+    (error) => Promise.reject(error)
   );
 
   return instance;
